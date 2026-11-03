@@ -14,9 +14,11 @@ from pathlib import Path
 import os
 
 from django.core.exceptions import ImproperlyConfigured
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
@@ -81,12 +83,52 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+DATABASE_ENGINE = os.environ.get('DATABASE_ENGINE', 'sqlite').lower()
+
+if DATABASE_ENGINE == 'postgresql':
+    required_database_settings = {
+        'POSTGRES_DB': os.environ.get('POSTGRES_DB'),
+        'POSTGRES_USER': os.environ.get('POSTGRES_USER'),
+        'POSTGRES_PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
+        'POSTGRES_HOST': os.environ.get('POSTGRES_HOST'),
     }
-}
+    missing_database_settings = [
+        setting
+        for setting, value in required_database_settings.items()
+        if not value
+    ]
+    if missing_database_settings:
+        raise ImproperlyConfigured(
+            'Defina no arquivo .env as configurações do PostgreSQL: '
+            + ', '.join(missing_database_settings)
+        )
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': required_database_settings['POSTGRES_DB'],
+            'USER': required_database_settings['POSTGRES_USER'],
+            'PASSWORD': required_database_settings['POSTGRES_PASSWORD'],
+            'HOST': required_database_settings['POSTGRES_HOST'],
+            'PORT': os.environ.get('POSTGRES_PORT', '5432'),
+            'OPTIONS': {
+                'sslmode': os.environ.get('POSTGRES_SSLMODE', 'require'),
+            },
+            'CONN_MAX_AGE': 60,
+            'CONN_HEALTH_CHECKS': True,
+        }
+    }
+elif DATABASE_ENGINE == 'sqlite':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+else:
+    raise ImproperlyConfigured(
+        'DATABASE_ENGINE deve ser "sqlite" ou "postgresql".'
+    )
 
 
 # Password validation
