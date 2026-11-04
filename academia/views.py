@@ -1,7 +1,16 @@
 from django.shortcuts import render
+from rest_framework import viewsets
+from .models import Aluno, Plano
+from .serializers import AlunoSerializer, PlanoSerializer
 
-# Create your views here.
-from django.shortcuts import render
+class AlunoViewSet(viewsets.ModelViewSet):
+    queryset = Aluno.objects.all()
+    serializer_class = AlunoSerializer
+
+
+class PlanoViewSet(viewsets.ModelViewSet):
+    queryset = Plano.objects.all()
+    serializer_class = PlanoSerializer
 
 
 def home(request):

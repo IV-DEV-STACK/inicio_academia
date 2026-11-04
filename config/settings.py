@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'academia.apps.AcademiaConfig',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
